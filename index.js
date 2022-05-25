@@ -31,6 +31,9 @@ async function run() {
         const partsInventoryCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Parts");
+        const OrderCollection = client
+            .db("Vehicle_Parts_Inventory")
+            .collection("Orders");
 
         app.get("/getParts", async(req, res) => {
             const query = {};
@@ -46,6 +49,38 @@ async function run() {
             const item = await partsInventoryCollection.findOne(query);
             res.send(item);
             // console.log("ff");
+        });
+
+        app.post("/booking", async(req, res) => {
+            const { Email, partName, Quantity, price } = req.body;
+            let order = {
+                userEmail: Email,
+                partName: partName,
+                orderedQuantity: Quantity,
+                price: price,
+                payment: false,
+            };
+            // res.send({ success: true, msg: "Order Placed Successfully" });
+            // console.log("Email: ", price);
+            // console.log("PartID: ", Quantity);
+            const id = (await OrderCollection.insertOne(order)).insertedId;
+            if (id) {
+                res.send({ success: true, msg: "Oder Placed Successfully" });
+            }
+        });
+
+        app.get("/get-orders", async(req, res) => {
+            const userEmail = req.query.buyer;
+
+            // console.log("Buyer: ", userEmail);
+            const query = { userEmail };
+            const cursor = OrderCollection.find(query);
+            const items = await cursor.toArray();
+            if (items.length > 0) {
+                res.send(items);
+            } else {
+                res.send({ msg: "No Orders." });
+            }
         });
     } catch (e) {
         console.log("Error is: ", e);

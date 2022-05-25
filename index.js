@@ -34,6 +34,9 @@ async function run() {
         const OrderCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Orders");
+        const userDetailsCollection = client
+            .db("Vehicle_Parts_Inventory")
+            .collection("userDetails");
 
         app.get("/getParts", async(req, res) => {
             const query = {};
@@ -74,13 +77,49 @@ async function run() {
 
             // console.log("Buyer: ", userEmail);
             const query = { userEmail };
-            const cursor = OrderCollection.find(query);
+            const cursor = await OrderCollection.find(query);
             const items = await cursor.toArray();
             if (items.length > 0) {
                 res.send(items);
             } else {
                 res.send({ msg: "No Orders." });
             }
+        });
+
+        app.put("/add-profile-info", async(req, res) => {
+            const { name, email, city, phone, linkedInProfile, undergraduation } =
+            req.body;
+
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateUserDetails = {
+                $set: {
+                    name: name,
+                    email: email,
+                    city: city,
+                    phone: phone,
+                    linkedInProfile: linkedInProfile,
+                    undergraduation: undergraduation,
+                },
+            };
+            const result = await userDetailsCollection.updateOne(
+                filter,
+                updateUserDetails,
+                options
+            );
+
+            res.send({ result });
+
+            // console.log("nam: ", name);
+        });
+
+        app.get("/get-userdetails", async(req, res) => {
+            const email = req.query.user;
+            console.log(email);
+            const query = { email };
+            const user = await userDetailsCollection.findOne(query);
+
+            res.send(user);
         });
     } catch (e) {
         console.log("Error is: ", e);

@@ -1,2 +1,2 @@
-GET http://localhost:5000/getParts/3? HTTP/1.1
+GET http://localhost:5000/get-userdetails?user=hasinsadique7@gmail.com HTTP/1.1
 Content-Type: application/json

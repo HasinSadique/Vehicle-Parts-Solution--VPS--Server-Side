@@ -86,6 +86,19 @@ async function run() {
             }
         });
 
+        app.delete("/delete-item/:id", async(req, res) => {
+            const id = req.params.id;
+            console.log("ID: ", id);
+
+            const query = { _id: ObjectId(id) };
+            const result = await OrderCollection.deleteOne(query);
+            if (result.acknowledged == true) {
+                res.send({ Status: 200, msg: "Successfully Deleted." });
+            } else {
+                res.send(status, { msg: "kuch to garbar hay..." });
+            }
+        });
+
         app.put("/add-profile-info", async(req, res) => {
             const { name, email, city, phone, linkedInProfile, undergraduation } =
             req.body;

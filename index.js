@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json({ extended: false }));
@@ -37,6 +38,12 @@ async function run() {
         const userDetailsCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("userDetails");
+        const usersCollection = client
+            .db("Vehicle_Parts_Inventory")
+            .collection("Users");
+        const reviewCollection = client
+            .db("Vehicle_Parts_Inventory")
+            .collection("Reviews");
 
         app.get("/getParts", async(req, res) => {
             const query = {};
@@ -70,6 +77,47 @@ async function run() {
             if (id) {
                 res.send({ success: true, msg: "Oder Placed Successfully" });
             }
+        });
+
+        app.get("/booking/:id", async(req, res) => {
+            const id = req.params.id;
+            // console.log(id);
+            const query = { _id: ObjectId(id) };
+            const order = await OrderCollection.findOne(query);
+            // console.log(order);
+            res.send(order);
+        });
+
+        app.get("/check-user-role", async(req, res) => {
+            const userEmail = req.query.userEmail;
+            console.log(userEmail);
+            // const query = { userEmail };
+            const currentUser = await usersCollection.findOne({ userEmail });
+            // console.log(currentUser);
+            res.send(currentUser);
+        });
+
+        app.post("/set-userrole", async(req, res) => {
+            const { userEmail, userRole } = req.body;
+            let user = { userEmail: userEmail, userRole: userRole };
+            console.log(user);
+            let response = await usersCollection.findOne(user);
+            console.log("resp: ", response);
+            if (response == null) {
+                const id = await (await usersCollection.insertOne(user)).insertedId;
+                if (id) {
+                    res.send({ success: true, msg: "user's role is set." });
+                }
+            } else {
+                res.send({ success: true, msg: `Already a ${response.userRole}` });
+            }
+        });
+
+        app.get("/get-all-users", async(req, res) => {
+            const query = {};
+            const cursor = usersCollection.find(query);
+            const users = await cursor.toArray();
+            res.send(users);
         });
 
         app.get("/get-orders", async(req, res) => {
@@ -133,6 +181,41 @@ async function run() {
             const user = await userDetailsCollection.findOne(query);
 
             res.send(user);
+        });
+
+        app.post("/review", async(req, res) => {
+            const comment = req.body;
+            console.log(comment);
+            const insertedId = (await reviewCollection.insertOne(comment)).insertedId;
+            res.send({ insertedId });
+            // console.log({ insertedId });
+        });
+        // app.post("/create-payment-intent", async(req, res) => {
+        //     const { price } = req.body;
+        //     const amount = price * 100;
+        //     console.log(amount);
+        //     const paymentIntent = await stripe.paymentIntents.create({
+        //         amount: amount,
+        //         currency: "usd",
+        //         payment_method_types: ["card"],
+        //     });
+        //     res.send({ clientSecret: paymentIntent.client_secret });
+        // });
+
+        app.post("/create-payment-intent", async(req, res) => {
+            const order = req.body;
+            const price = order.price;
+            const amount = price * 100;
+            if (amount != NaN) {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: "usd",
+                    payment_method_types: ["card"],
+                });
+                res.send({ clientSecret: paymentIntent.client_secret });
+            } else {
+                console.log("ghumay jao");
+            }
         });
     } catch (e) {
         console.log("Error is: ", e);

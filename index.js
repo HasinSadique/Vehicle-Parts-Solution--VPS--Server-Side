@@ -52,6 +52,14 @@ async function run() {
             res.send(items);
         });
 
+        app.get("/review", async(req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const items = await cursor.toArray();
+            res.send(items);
+            // console.log("review", items);
+        });
+
         app.get("/getParts/:id", async(req, res) => {
             const id = req.params.id;
             console.log("id>>>: ", id);
@@ -120,6 +128,17 @@ async function run() {
             res.send(users);
         });
 
+        app.put("/users/:email", async(req, res) => {
+            const email = req.params.email;
+            console.log("param email: ", email);
+            const filter = { userEmail: email };
+            const updateUser = {
+                $set: { userRole: "Admin" },
+            };
+            const result = await usersCollection.updateOne(filter, updateUser);
+            // res.send(result);
+            console.log(result);
+        });
         app.get("/get-orders", async(req, res) => {
             const userEmail = req.query.buyer;
 
@@ -181,6 +200,12 @@ async function run() {
             const user = await userDetailsCollection.findOne(query);
 
             res.send(user);
+        });
+
+        app.post("/part", async(req, res) => {
+            const equipment = req.body;
+            const result = await partsInventoryCollection.insertOne(equipment);
+            res.send(result);
         });
 
         app.post("/review", async(req, res) => {

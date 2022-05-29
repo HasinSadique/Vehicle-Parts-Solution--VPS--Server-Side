@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { Query } = require("mongoose");
+const { query } = require("express");
 const app = express();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -32,15 +34,19 @@ async function run() {
         const partsInventoryCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Parts");
+
         const OrderCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Orders");
+
         const userDetailsCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("userDetails");
+
         const usersCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Users");
+
         const reviewCollection = client
             .db("Vehicle_Parts_Inventory")
             .collection("Reviews");
@@ -67,11 +73,9 @@ async function run() {
 
         app.get("/getParts/:id", async(req, res) => {
             const id = req.params.id;
-            console.log("id>>>: ", id);
-            const query = { _id: id };
+            const query = { _id: ObjectId(id) };
             const item = await partsInventoryCollection.findOne(query);
             res.send(item);
-            // console.log("ff");
         });
 
         app.post("/booking", async(req, res) => {
@@ -94,16 +98,39 @@ async function run() {
 
         app.get("/booking/:id", async(req, res) => {
             const id = req.params.id;
-            // console.log(id);
+            console.log(id);
             const query = { _id: ObjectId(id) };
             const order = await OrderCollection.findOne(query);
-            // console.log(order);
+            console.log(order);
             res.send(order);
+        });
+        app.patch("/booking/:id", async(req, res) => {
+            const id = req.params.id;
+            // console.log(id);
+            const query = { _id: ObjectId(id) };
+            // console.log("trx Data: ", req.body);
+
+            // trx Data:  {
+            //     order: '629349006b27fcb70594694d',
+            //     transactionId: 'pi_3L4lp7LRrtcADGJC06b20GfZ'
+            //   }
+            const { order, transactionId } = req.body;
+
+            const filter = { _id: ObjectId(order) };
+            const updateOrder = {
+                $set: {
+                    payment: true,
+                    TRXID: transactionId,
+                    Order_Status: "Pending for Shipment",
+                },
+            };
+            const result = await OrderCollection.updateOne(filter, updateOrder);
+            console.log(result);
         });
 
         app.get("/check-user-role", async(req, res) => {
             const userEmail = req.query.userEmail;
-            console.log(userEmail);
+            // console.log("email: ", userEmail);
             // const query = { userEmail };
             const currentUser = await usersCollection.findOne({ userEmail });
             // console.log(currentUser);
@@ -111,9 +138,9 @@ async function run() {
         });
 
         app.post("/set-userrole", async(req, res) => {
-            const { userEmail, userRole } = req.body;
-            let user = { userEmail: userEmail, userRole: userRole };
-            console.log(user);
+            const { currentUser, userRole } = req.body;
+            let user = { userEmail: currentUser, userRole: userRole };
+            console.log("SetUser: ", user);
             let response = await usersCollection.findOne(user);
             console.log("resp: ", response);
             if (response == null) {
@@ -141,8 +168,8 @@ async function run() {
                 $set: { userRole: "Admin" },
             };
             const result = await usersCollection.updateOne(filter, updateUser);
-            // res.send(result);
             console.log(result);
+            // res.send(result);
         });
         app.get("/get-orders", async(req, res) => {
             const userEmail = req.query.buyer;
@@ -156,6 +183,13 @@ async function run() {
             } else {
                 res.send({ msg: "No Orders." });
             }
+        });
+
+        app.get("/get-all-orders", async(req, res) => {
+            const query = {};
+            const cursor = OrderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
         });
 
         app.delete("/delete-item/:id", async(req, res) => {
@@ -232,20 +266,32 @@ async function run() {
         //     res.send({ clientSecret: paymentIntent.client_secret });
         // });
 
+        // app.post("/create-payment-intent", async(req, res) => {
+        //     const order = req.body;
+        //     const price = order.price;
+        //     const amount = price * 100;
+        //     if (amount != NaN) {
+        //         const paymentIntent = await stripe.paymentIntents.create({
+        //             amount: amount,
+        //             currency: "usd",
+        //             payment_method_types: ["card"],
+        //         });
+        //         res.send({ clientSecret: paymentIntent.client_secret });
+        //     } else {
+        //         console.log("ghumay jao");
+        //     }
+        // });
+
         app.post("/create-payment-intent", async(req, res) => {
             const order = req.body;
             const price = order.price;
             const amount = price * 100;
-            if (amount != NaN) {
-                const paymentIntent = await stripe.paymentIntents.create({
-                    amount: amount,
-                    currency: "usd",
-                    payment_method_types: ["card"],
-                });
-                res.send({ clientSecret: paymentIntent.client_secret });
-            } else {
-                console.log("ghumay jao");
-            }
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"],
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
         });
     } catch (e) {
         console.log("Error is: ", e);

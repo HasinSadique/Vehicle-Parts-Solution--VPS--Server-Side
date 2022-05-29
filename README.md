@@ -1,6 +1,22 @@
-# Getting Started with Create React App
+**# Vehicle Parts Solution**
 
-Live Link: [Vehicle Parts Solutions](https://parts-manufacturer-site.web.app/).
+**Description:**
+
+This is a full stack MERN Project. Using this site Customers can order new Parts, make payment, etc. Admin account allows Creation of new admin user accounts, manage all orders as well as handle shipments.
+
+##Features:
+
+- Admin Dashboard
+- See All Users from Admin Account
+- Manage all Orders from Admin Account
+- Add New Parts
+
+- Customer's Dashboard
+- View All Orders
+- Cancel an Order
+- Make Payment via Credit/Debit Card (Used Stripe Payment Method) 
+
+Live Site: [Vehicle Parts Solutions](https://parts-manufacturer-site.web.app).
 
 ## List of Technologies
 
@@ -11,6 +27,7 @@ Live Link: [Vehicle Parts Solutions](https://parts-manufacturer-site.web.app/).
 - React Router
 - MongoDB
 - Heroku
+- JWT
 
 ## Frameworks & Libraries
 

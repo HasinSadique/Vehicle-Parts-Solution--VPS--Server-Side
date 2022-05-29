@@ -104,18 +104,12 @@ async function run() {
             console.log(order);
             res.send(order);
         });
+
         app.patch("/booking/:id", async(req, res) => {
             const id = req.params.id;
-            // console.log(id);
             const query = { _id: ObjectId(id) };
-            // console.log("trx Data: ", req.body);
 
-            // trx Data:  {
-            //     order: '629349006b27fcb70594694d',
-            //     transactionId: 'pi_3L4lp7LRrtcADGJC06b20GfZ'
-            //   }
             const { order, transactionId } = req.body;
-
             const filter = { _id: ObjectId(order) };
             const updateOrder = {
                 $set: {
@@ -254,33 +248,6 @@ async function run() {
             res.send({ insertedId });
             // console.log({ insertedId });
         });
-        // app.post("/create-payment-intent", async(req, res) => {
-        //     const { price } = req.body;
-        //     const amount = price * 100;
-        //     console.log(amount);
-        //     const paymentIntent = await stripe.paymentIntents.create({
-        //         amount: amount,
-        //         currency: "usd",
-        //         payment_method_types: ["card"],
-        //     });
-        //     res.send({ clientSecret: paymentIntent.client_secret });
-        // });
-
-        // app.post("/create-payment-intent", async(req, res) => {
-        //     const order = req.body;
-        //     const price = order.price;
-        //     const amount = price * 100;
-        //     if (amount != NaN) {
-        //         const paymentIntent = await stripe.paymentIntents.create({
-        //             amount: amount,
-        //             currency: "usd",
-        //             payment_method_types: ["card"],
-        //         });
-        //         res.send({ clientSecret: paymentIntent.client_secret });
-        //     } else {
-        //         console.log("ghumay jao");
-        //     }
-        // });
 
         app.post("/create-payment-intent", async(req, res) => {
             const order = req.body;

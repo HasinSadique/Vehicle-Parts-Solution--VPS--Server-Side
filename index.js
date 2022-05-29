@@ -104,6 +104,19 @@ async function run() {
             console.log(order);
             res.send(order);
         });
+        app.patch("/make-shipment/:id", async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            // const filter = { _id: ObjectId(order) };
+            console.log("ID:", id);
+            const updateOrder = {
+                $set: {
+                    Order_Status: "Shipped",
+                },
+            };
+            const result = await OrderCollection.updateOne(query, updateOrder);
+            res.send(result);
+        });
 
         app.patch("/booking/:id", async(req, res) => {
             const id = req.params.id;
@@ -120,6 +133,7 @@ async function run() {
             };
             const result = await OrderCollection.updateOne(filter, updateOrder);
             console.log(result);
+            res.send(result);
         });
 
         app.get("/check-user-role", async(req, res) => {
@@ -162,8 +176,8 @@ async function run() {
                 $set: { userRole: "Admin" },
             };
             const result = await usersCollection.updateOne(filter, updateUser);
-            console.log(result);
-            // res.send(result);
+            // console.log(result);
+            res.send(result);
         });
         app.get("/get-orders", async(req, res) => {
             const userEmail = req.query.buyer;
@@ -191,10 +205,12 @@ async function run() {
             console.log("ID: ", id);
 
             const query = { _id: ObjectId(id) };
-            const result = await OrderCollection.deleteOne(query);
+            const result = await partsInventoryCollection.deleteOne(query);
             if (result.acknowledged == true) {
+                // console.log(result);
                 res.send({ Status: 200, msg: "Successfully Deleted." });
             } else {
+                // console.log("Ki jani");
                 res.send(status, { msg: "kuch to garbar hay..." });
             }
         });
